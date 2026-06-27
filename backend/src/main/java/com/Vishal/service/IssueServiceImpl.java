@@ -31,7 +31,7 @@ public class IssueServiceImpl implements IssueService{
         }
         throw new Exception("No issues found with issueId" +issueId);
     }
-
+ 
     @Override
     public List<Issue> getIssueByProjectId(Long projectId) throws Exception {
         return issueRepository.findByProjectId(projectId);

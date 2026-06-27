@@ -18,6 +18,7 @@ public class Issue {
     private String title;
     private String description;
     private String status;
+    @Column(name = "project_id", insertable = false, updatable = false)
     private Long projectId;
     private String priority;
     private LocalDate dueDate;
@@ -33,5 +34,6 @@ public class Issue {
     @JsonIgnore
     @OneToMany(mappedBy = "issue",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Comment>comments=new ArrayList<>();
+
 
 }
