@@ -1,0 +1,3 @@
+🚀 Project Management System
+
+📋 Project Management System is a full-stack web application that helps users easily manage projects and tasks in one place. 👥 Users can create projects, add team members, create and assign tasks, track project progress, send invitations, and communicate through chat. 🔐 The application uses JWT authentication for secure login and REST APIs for communication between the frontend and backend. 💻 The frontend is developed using React, while the backend is built with Java Spring Boot. 🗄️ The system uses a database to store users, projects, tasks, and other application data. 🎯 The main goal of this project is to make project management and team collaboration simple, organized, and efficient.
