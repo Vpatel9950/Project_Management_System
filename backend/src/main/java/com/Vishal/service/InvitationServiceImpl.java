@@ -38,7 +38,7 @@ public class InvitationServiceImpl implements InvitationService{
         if(invitation==null){
             throw new Exception("Invalid Invitation Token");
         }
-        return null;
+        return invitation;
     }
 
     @Override
