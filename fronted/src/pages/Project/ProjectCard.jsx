@@ -1,11 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { Users, FolderGit2, Trash2, ArrowUpRight, Tag, User } from "lucide-react";
 
 const ProjectCard = ({ project, onDelete }) => {
+  const { user, isAdmin } = useAuth();
   if (!project) return null;
 
   const { id, name, description, category, tags = [], team = [], owner } = project;
+  const canDelete = isAdmin || (owner?.id && user?.id && owner.id === user.id);
 
   return (
     <div className="group relative backdrop-blur-xl bg-slate-900/60 border border-slate-800/80 hover:border-indigo-500/50 rounded-2xl p-6 shadow-xl hover:shadow-[0_20px_40px_rgba(79,70,229,0.2)] transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col justify-between overflow-hidden">
@@ -20,7 +23,7 @@ const ProjectCard = ({ project, onDelete }) => {
             {category || "General"}
           </span>
 
-          {onDelete && (
+          {onDelete && canDelete && (
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -30,7 +33,7 @@ const ProjectCard = ({ project, onDelete }) => {
                 }
               }}
               className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100"
-              title="Delete Project"
+              title="Delete Project (Admin/Owner only)"
             >
               <Trash2 className="w-4 h-4" />
             </button>

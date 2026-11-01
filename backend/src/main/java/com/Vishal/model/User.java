@@ -25,4 +25,7 @@ public class User {
     @OneToMany(mappedBy = "assignedTo",cascade = CascadeType.ALL)
     private List<Issue> assignedIssues=new ArrayList<>();
     private int projectSize;
+
+    @Enumerated(EnumType.STRING)
+    private UserRole role = UserRole.ROLE_MEMBER;
 }

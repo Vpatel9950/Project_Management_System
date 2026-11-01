@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { projectService } from "../../services/projectService";
+import { useAuth } from "../../context/AuthContext";
 import IssueBoard from "../Issue/IssueBoard";
 import ProjectChat from "../Chat/ProjectChat";
 import InviteMemberModal from "../../components/InviteMemberModal";
@@ -13,10 +14,14 @@ import {
   Kanban,
   MessageSquare,
   Sparkles,
+  Shield,
+  Briefcase,
+  UserCheck,
 } from "lucide-react";
 
 const ProjectDetails = () => {
   const { id } = useParams();
+  const { user, isAdmin, isManager, isMember, canManageProjects } = useAuth();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("tasks"); // "tasks" | "chat"
@@ -102,13 +107,15 @@ const ProjectDetails = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsInviteOpen(true)}
-            className="self-start md:self-auto px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center gap-2"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Invite Team Member</span>
-          </button>
+          {canManageProjects && (
+            <button
+              onClick={() => setIsInviteOpen(true)}
+              className="self-start md:self-auto px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-purple-500/25 transition-all flex items-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Invite Team Member</span>
+            </button>
+          )}
         </div>
 
         {/* Team Members List */}
@@ -132,7 +139,7 @@ const ProjectDetails = () => {
           </div>
 
           <div className="text-xs text-slate-400">
-            Owner: <span className="text-slate-200 font-semibold">{project.owner?.fullName || "You"}</span>
+            Owner / Lead: <span className="text-slate-200 font-semibold">{project.owner?.fullName || "You"}</span>
           </div>
         </div>
       </div>
@@ -176,12 +183,14 @@ const ProjectDetails = () => {
       )}
 
       {/* Email Invite Modal */}
-      <InviteMemberModal
-        isOpen={isInviteOpen}
-        onClose={() => setIsInviteOpen(false)}
-        projectId={project.id}
-        projectName={project.name}
-      />
+      {canManageProjects && (
+        <InviteMemberModal
+          isOpen={isInviteOpen}
+          onClose={() => setIsInviteOpen(false)}
+          projectId={project.id}
+          projectName={project.name}
+        />
+      )}
     </div>
   );
 };

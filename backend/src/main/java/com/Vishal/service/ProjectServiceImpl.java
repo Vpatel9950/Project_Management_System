@@ -3,6 +3,7 @@ package com.Vishal.service;
 import com.Vishal.model.Chat;
 import com.Vishal.model.Project;
 import com.Vishal.model.User;
+import com.Vishal.model.UserRole;
 import com.Vishal.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,6 @@ public class ProjectServiceImpl implements ProjectService {
     @Autowired
     private ChatService chatService;
 
-
     @Override
     public Project createProject(Project project, User user) throws Exception {
         Project createdProject=new Project();
@@ -40,7 +40,6 @@ public class ProjectServiceImpl implements ProjectService {
         Chat chat=new Chat();
         chat.setProject(savedProject);
 
-
         Chat projectChat=chatService.createChat(chat);
         savedProject.setChat(projectChat);
 
@@ -49,12 +48,17 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<Project> getProjectByTeam(User user, String category, String tag) throws Exception {
-        List<Project>projects=projectRepository.findByTeamContainingOrOwner(user,user);
-        if(category!=null){
-            projects=projects.stream().filter(project -> project.getCategory().equals(category))
+        List<Project> projects;
+        if (user.getRole() == UserRole.ROLE_ADMIN) {
+            projects = projectRepository.findAll();
+        } else {
+            projects = projectRepository.findByTeamContainingOrOwner(user, user);
+        }
+        if(category!=null && !category.isEmpty() && !category.equalsIgnoreCase("all")){
+            projects=projects.stream().filter(project -> category.equalsIgnoreCase(project.getCategory()))
                     .collect(Collectors.toList());
         }
-        if(tag!=null){
+        if(tag!=null && !tag.isEmpty() && !tag.equalsIgnoreCase("all")){
             projects=projects.stream().filter(project -> project.getTags().contains(tag))
                     .collect(Collectors.toList());
         }
@@ -72,9 +76,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public void deleteProject(Long projectId, Long userId) throws Exception {
-          getProjectById(projectId);
-          //userService.findUserById(userId);
-          projectRepository.deleteById(projectId);
+        Project project = getProjectById(projectId);
+        User user = userService.findUserById(userId);
+        if (user.getRole() != UserRole.ROLE_ADMIN && !project.getOwner().getId().equals(userId)) {
+            throw new Exception("Access Denied: Only project owner or Admin can delete this project.");
+        }
+        projectRepository.deleteById(projectId);
     }
 
     @Override
@@ -119,9 +126,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public List<Project> searchProjects(String keyword, User user) throws Exception {
-        //String partialName="%"+keyword+"%";
+        if (user.getRole() == UserRole.ROLE_ADMIN) {
+            return projectRepository.findByNameContaining(keyword);
+        }
         return projectRepository.findByNameContainingAndTeamContains(keyword,user);
     }
-
-
 }

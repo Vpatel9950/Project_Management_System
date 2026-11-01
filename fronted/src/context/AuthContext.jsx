@@ -46,10 +46,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (fullName, email, password) => {
+  const register = async (fullName, email, password, role = "ROLE_MEMBER") => {
     setError(null);
     try {
-      const data = await authService.register({ fullName, email, password });
+      const data = await authService.register({ fullName, email, password, role });
       await fetchUserProfile();
       return data;
     } catch (err) {
@@ -64,6 +64,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const isAdmin = user?.role === "ROLE_ADMIN";
+  const isManager = user?.role === "ROLE_MANAGER";
+  const isMember = user?.role === "ROLE_MEMBER";
+  const canManageProjects = isAdmin || isManager;
+
   return (
     <AuthContext.Provider
       value={{
@@ -74,6 +79,10 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         fetchUserProfile,
+        isAdmin,
+        isManager,
+        isMember,
+        canManageProjects,
       }}
     >
       {children}

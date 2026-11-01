@@ -14,12 +14,14 @@ import {
   Sparkles,
   Zap,
   Shield,
+  Briefcase,
+  UserCheck,
   MessageSquare,
   Layers,
 } from "lucide-react";
 
 const Dashboard = ({ onOpenCreateProject }) => {
-  const { user } = useAuth();
+  const { user, isAdmin, isManager, isMember, canManageProjects } = useAuth();
   const [projects, setProjects] = useState([]);
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,28 @@ const Dashboard = ({ onOpenCreateProject }) => {
 
   const totalMembers = projects.reduce((acc, p) => acc + (p.team?.length || 0), 0);
 
+  const getRoleHeaderBadge = () => {
+    if (isAdmin) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
+          <Shield className="w-3.5 h-3.5" /> Full System Admin
+        </span>
+      );
+    }
+    if (isManager) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+          <Briefcase className="w-3.5 h-3.5" /> Project Manager
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+        <UserCheck className="w-3.5 h-3.5" /> Team Member
+      </span>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
       {/* 3D Welcome Hero Banner */}
@@ -59,18 +83,27 @@ const Dashboard = ({ onOpenCreateProject }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
           <div className="lg:col-span-7 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              <Sparkles className="w-3.5 h-3.5" /> Workspace Dashboard
+            <div className="flex items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <Sparkles className="w-3.5 h-3.5" /> Workspace Dashboard
+              </div>
+              {getRoleHeaderBadge()}
             </div>
+
             <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
               Welcome back, <span className="bg-gradient-to-r from-indigo-300 via-purple-200 to-pink-300 bg-clip-text text-transparent">{user?.fullName || "Developer"}</span> 👋
             </h1>
+
             <p className="text-slate-300 text-sm md:text-base leading-relaxed max-w-xl">
-              Track active projects, organize task kanban columns, invite team members via automated email services, and accelerate your engineering workflow.
+              {isAdmin
+                ? "Full control view: Supervise all active projects, monitor system activities, and manage team member role privileges."
+                : isManager
+                ? "Manage your active project portfolios, organize task kanban columns, invite team members, and track delivery deadlines."
+                : "Collaborate with your project team, inspect assigned tasks, update completion status, and participate in project discussions."}
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-2">
-              {onOpenCreateProject && (
+              {canManageProjects && onOpenCreateProject && (
                 <button
                   onClick={onOpenCreateProject}
                   className="px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm rounded-2xl shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
@@ -78,6 +111,16 @@ const Dashboard = ({ onOpenCreateProject }) => {
                   <Plus className="w-5 h-5" />
                   <span>Create Project</span>
                 </button>
+              )}
+
+              {isAdmin && (
+                <Link
+                  to="/admin/users"
+                  className="px-6 py-3.5 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 font-semibold text-sm rounded-2xl transition-all flex items-center gap-2"
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Manage System Users</span>
+                </Link>
               )}
 
               <Link
@@ -101,8 +144,8 @@ const Dashboard = ({ onOpenCreateProject }) => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60"></div>
               <div className="absolute bottom-4 left-4 right-4 backdrop-blur-md bg-slate-950/70 p-3 rounded-xl border border-slate-800 flex items-center justify-between text-xs text-slate-300">
-                <span className="font-semibold text-indigo-300">Live 3D Kanban Suite</span>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Spring Boot 3 API</span>
+                <span className="font-semibold text-indigo-300">3-Tier RBAC Architecture</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Admin • Manager • Member</span>
               </div>
             </div>
           </div>
@@ -115,7 +158,7 @@ const Dashboard = ({ onOpenCreateProject }) => {
         <div className="backdrop-blur-xl bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl hover:border-indigo-500/40 transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Total Projects
+              {isAdmin ? "All System Projects" : "Accessible Projects"}
             </span>
             <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
               <FolderKanban className="w-5 h-5" />
@@ -124,7 +167,7 @@ const Dashboard = ({ onOpenCreateProject }) => {
           <div className="text-3xl font-extrabold text-white">
             {loading ? "..." : projects.length}
           </div>
-          <p className="text-xs text-slate-500 mt-2">Active workspaces in backend</p>
+          <p className="text-xs text-slate-500 mt-2">{isAdmin ? "Total projects in database" : "Projects in your team"}</p>
         </div>
 
         {/* Card 2 */}
@@ -140,24 +183,23 @@ const Dashboard = ({ onOpenCreateProject }) => {
           <div className="text-3xl font-extrabold text-white">
             {loading ? "..." : totalMembers}
           </div>
-          <p className="text-xs text-slate-500 mt-2">Invited members across projects</p>
+          <p className="text-xs text-slate-500 mt-2">Active members across projects</p>
         </div>
 
         {/* Card 3 */}
         <div className="backdrop-blur-xl bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl hover:border-emerald-500/40 transition-all duration-300 transform hover:-translate-y-1">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Backend Status
+              Your Privilege Role
             </span>
             <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <Zap className="w-5 h-5" />
+              <Shield className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-lg font-bold text-emerald-400 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-            Connected
+          <div className="text-xl font-bold text-white flex items-center gap-2">
+            {isAdmin ? "Administrator" : isManager ? "Project Manager" : "Team Member"}
           </div>
-          <p className="text-xs text-slate-500 mt-2">Spring Boot API running on :5454</p>
+          <p className="text-xs text-slate-500 mt-2">{isAdmin ? "Full system access" : isManager ? "Project leadership" : "Task tracking"}</p>
         </div>
 
         {/* Card 4 */}
@@ -198,51 +240,41 @@ const Dashboard = ({ onOpenCreateProject }) => {
           <div className="lg:col-span-7 space-y-6">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-2 block">
-                Platform Architecture
+                Role-Based Architecture (RBAC)
               </span>
               <h2 className="text-2xl md:text-3xl font-extrabold text-white">
-                Engineered for High-Performance Teams
+                Clear Separation of Responsibilities
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-rose-500/20 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-rose-300">
+                  <Shield className="w-4 h-4 text-rose-400" />
+                  <span>1. Admin (Full Control)</span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Create, update, delete users, monitor all system projects, and manage teams.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-indigo-500/20 space-y-2">
                 <div className="flex items-center gap-2 font-bold text-indigo-300">
-                  <Layers className="w-4 h-4 text-indigo-400" />
-                  <span>3D Kanban Board</span>
+                  <Briefcase className="w-4 h-4 text-indigo-400" />
+                  <span>2. Manager (Projects)</span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Categorize tasks into Pending, In Progress, and Completed columns with status updates.
+                  Create & manage projects, assign tasks to members, track deadlines & progress.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-purple-300">
-                  <Users className="w-4 h-4 text-purple-400" />
-                  <span>Email Invitations</span>
-                </div>
-                <p className="text-xs text-slate-400">
-                  Dispatch email tokens via JavaMailSender for seamless project onboarding.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-emerald-500/20 space-y-2">
                 <div className="flex items-center gap-2 font-bold text-emerald-300">
-                  <MessageSquare className="w-4 h-4 text-emerald-400" />
-                  <span>Team Discussion Chat</span>
+                  <UserCheck className="w-4 h-4 text-emerald-400" />
+                  <span>3. Member (Tasks)</span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Real-time project message exchange saved right in your Spring Data JPA backend.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2">
-                <div className="flex items-center gap-2 font-bold text-amber-300">
-                  <Shield className="w-4 h-4 text-amber-400" />
-                  <span>Razorpay Payments</span>
-                </div>
-                <p className="text-xs text-slate-400">
-                  Secure plan upgrade link generation without exposing private keys.
+                  View assigned projects & tasks, update task status, and report task progress.
                 </p>
               </div>
             </div>
@@ -276,7 +308,7 @@ const Dashboard = ({ onOpenCreateProject }) => {
         ) : projects.length === 0 ? (
           <div className="text-center py-12 backdrop-blur-xl bg-slate-900/40 border border-slate-800 rounded-3xl p-8">
             <p className="text-slate-400 text-sm">No projects created yet.</p>
-            {onOpenCreateProject && (
+            {canManageProjects && onOpenCreateProject && (
               <button
                 onClick={onOpenCreateProject}
                 className="mt-4 px-5 py-2 bg-indigo-600 text-white rounded-xl font-medium text-sm"

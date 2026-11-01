@@ -2,6 +2,7 @@ package com.Vishal.controller;
 
 import com.Vishal.config.JwtProvider;
 import com.Vishal.model.User;
+import com.Vishal.model.UserRole;
 import com.Vishal.repository.UserRepository;
 import com.Vishal.request.LoginRequest;
 import com.Vishal.response.AuthResponse;
@@ -47,19 +48,21 @@ public class AuthController {
        createdUser.setPassword(passwordEncoder.encode(user.getPassword()));
        createdUser.setEmail(user.getEmail());
        createdUser.setFullName(user.getFullName());
+       createdUser.setRole(user.getRole() != null ? user.getRole() : UserRole.ROLE_MEMBER);
 
        User savedUser=userRepository.save(createdUser);
 
        subscriptionService.createSubscription(savedUser);
 
-        Authentication authentication=new UsernamePasswordAuthenticationToken(user.getEmail(),user.getPassword());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+       UserDetails userDetails = customUserDetails.loadUserByUsername(savedUser.getEmail());
+       Authentication authentication=new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+       SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt= JwtProvider.generateToken(authentication);
+       String jwt= JwtProvider.generateToken(authentication);
 
-        AuthResponse authResponse=new AuthResponse();
-        authResponse.setMessage("signup successful");
-        authResponse.setJwt(jwt);
+       AuthResponse authResponse=new AuthResponse();
+       authResponse.setMessage("signup successful");
+       authResponse.setJwt(jwt);
 
        return new ResponseEntity<>(authResponse, HttpStatus.CREATED);
     }

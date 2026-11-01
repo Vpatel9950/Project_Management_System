@@ -3,8 +3,8 @@ package com.Vishal.controller;
 import com.Vishal.DTO.IssueDTO;
 import com.Vishal.model.Issue;
 import com.Vishal.model.User;
+import com.Vishal.model.UserRole;
 import com.Vishal.request.IssueRequest;
-import com.Vishal.response.AuthResponse;
 import com.Vishal.response.MessageResponse;
 import com.Vishal.service.IssueService;
 import com.Vishal.service.UserService;
@@ -39,9 +39,10 @@ public class IssueController {
             @RequestBody IssueRequest issue,
             @RequestHeader("Authorization")String token) throws Exception{
 
-        System.out.println("issue........."+issue);
         User tokenUser=userService.findUserProfileByJwt(token);
-        User user=userService.findUserById(tokenUser.getId());
+        if (tokenUser.getRole() == UserRole.ROLE_MEMBER) {
+            throw new Exception("Access Denied: Only Managers and Admins can create tasks.");
+        }
 
         Issue createdIssue=issueService.createIssue(issue,tokenUser);
         IssueDTO issueDTO=new IssueDTO();
@@ -61,9 +62,12 @@ public class IssueController {
 
     @DeleteMapping("/{issueId}")
     public ResponseEntity<MessageResponse>deleteIssue(
-                                        @PathVariable Long issueId,
-                                        @RequestHeader("Authorization") String token) throws Exception{
+            @PathVariable Long issueId,
+            @RequestHeader("Authorization") String token) throws Exception{
         User user=userService.findUserProfileByJwt(token);
+        if (user.getRole() == UserRole.ROLE_MEMBER) {
+            throw new Exception("Access Denied: Only Managers and Admins can delete tasks.");
+        }
         issueService.deleteIssue(issueId,user.getId());
 
         MessageResponse res=new MessageResponse();
@@ -73,8 +77,13 @@ public class IssueController {
 
     @PutMapping("{issueId}/assignee/{userId}")
     public ResponseEntity<Issue>addUserToIssue(
-                                   @PathVariable Long issueId,
-                                   @PathVariable Long userId) throws Exception{
+            @PathVariable Long issueId,
+            @PathVariable Long userId,
+            @RequestHeader("Authorization") String token) throws Exception{
+        User user=userService.findUserProfileByJwt(token);
+        if (user.getRole() == UserRole.ROLE_MEMBER) {
+            throw new Exception("Access Denied: Only Managers and Admins can assign tasks.");
+        }
         Issue issue=issueService.addUserToIssue(issueId,userId);
         return ResponseEntity.ok(issue);
     }
@@ -86,7 +95,5 @@ public class IssueController {
         Issue issue=issueService.updateStatus(issueId,status);
         return ResponseEntity.ok(issue);
     }
-
-
 
 }

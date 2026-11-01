@@ -2,10 +2,12 @@ package com.Vishal.service;
 
 import com.Vishal.config.JwtProvider;
 import com.Vishal.model.User;
+import com.Vishal.model.UserRole;
 import com.Vishal.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -42,5 +44,23 @@ public class UserServiceImpl implements UserService {
     public User updateUsersProjectSize(User user, int number) {
         user.setProjectSize(user.getProjectSize()+number);
         return userRepository.save(user);
+    }
+
+    @Override
+    public List<User> getAllUsers() throws Exception {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public User updateUserRole(Long userId, UserRole role) throws Exception {
+        User user = findUserById(userId);
+        user.setRole(role);
+        return userRepository.save(user);
+    }
+
+    @Override
+    public void deleteUser(Long userId) throws Exception {
+        findUserById(userId);
+        userRepository.deleteById(userId);
     }
 }

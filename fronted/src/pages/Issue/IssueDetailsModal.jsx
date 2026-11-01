@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { issueService } from "../../services/issueService";
 import { commentService } from "../../services/commentService";
+import { useAuth } from "../../context/AuthContext";
 import {
   X,
   UserPlus,
@@ -11,6 +12,9 @@ import {
   Tag,
   CheckCircle2,
   Clock,
+  Shield,
+  Briefcase,
+  UserCheck,
 } from "lucide-react";
 
 const statuses = ["pending", "in_progress", "done"];
@@ -23,6 +27,7 @@ const IssueDetailsModal = ({
   onUpdateIssue,
   onDeleteIssue,
 }) => {
+  const { user, canManageProjects, isMember } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
@@ -62,13 +67,17 @@ const IssueDetailsModal = ({
   };
 
   const handleAssigneeChange = async (userId) => {
+    if (!canManageProjects) {
+      alert("Permission Denied: Only Managers and Admins can assign tasks.");
+      return;
+    }
     setSelectedAssignee(userId);
     if (!userId) return;
     try {
       const updated = await issueService.assignUserToIssue(issue.id, userId);
       if (onUpdateIssue) onUpdateIssue(updated);
     } catch (err) {
-      alert("Failed to assign member.");
+      alert(err.response?.data?.message || "Failed to assign member.");
     }
   };
 
@@ -98,13 +107,17 @@ const IssueDetailsModal = ({
   };
 
   const handleDeleteIssue = async () => {
+    if (!canManageProjects) {
+      alert("Permission Denied: Only Managers and Admins can delete tasks.");
+      return;
+    }
     if (window.confirm("Are you sure you want to delete this task?")) {
       try {
         await issueService.deleteIssue(issue.id);
         if (onDeleteIssue) onDeleteIssue(issue.id);
         onClose();
       } catch (err) {
-        alert("Failed to delete task.");
+        alert(err.response?.data?.message || "Failed to delete task.");
       }
     }
   };
@@ -127,13 +140,15 @@ const IssueDetailsModal = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleDeleteIssue}
-              className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-              title="Delete Task"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
+            {canManageProjects && (
+              <button
+                onClick={handleDeleteIssue}
+                className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                title="Delete Task (Manager/Admin)"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
             <button
               onClick={onClose}
               className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -159,10 +174,11 @@ const IssueDetailsModal = ({
 
           {/* Sidebar Properties */}
           <div className="space-y-4 bg-slate-950/40 p-4 rounded-2xl border border-slate-800/60">
-            {/* Status Selector */}
+            {/* Status Selector - Available for all roles including Member */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                Status
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+                <span>Status</span>
+                <span className="text-[10px] text-emerald-400 font-normal">All roles can update</span>
               </label>
               <select
                 value={issue.status || "pending"}
@@ -177,15 +193,20 @@ const IssueDetailsModal = ({
               </select>
             </div>
 
-            {/* Assignee Selector */}
+            {/* Assignee Selector - Restricted to Manager and Admin */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                Assigned To
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+                <span>Assigned To</span>
+                {!canManageProjects && (
+                  <span className="text-[10px] text-slate-500">Manager only</span>
+                )}
               </label>
               <select
                 value={selectedAssignee}
                 onChange={(e) => handleAssigneeChange(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                disabled={!canManageProjects}
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                title={!canManageProjects ? "Only Managers and Admins can assign tasks" : ""}
               >
                 <option value="">Unassigned</option>
                 {teamMembers.map((m) => (
@@ -215,7 +236,7 @@ const IssueDetailsModal = ({
         <div className="pt-6 space-y-4">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-indigo-400" />
-            Comments & Activity ({comments.length})
+            Comments & Discussion ({comments.length})
           </h3>
 
           {/* Add Comment Input */}
@@ -224,7 +245,7 @@ const IssueDetailsModal = ({
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Write a comment..."
+              placeholder="Write a comment or report task progress..."
               className="flex-1 px-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
             />
             <button
@@ -263,13 +284,15 @@ const IssueDetailsModal = ({
                     <p className="text-sm text-slate-200">{c.content}</p>
                   </div>
 
-                  <button
-                    onClick={() => handleDeleteComment(c.id)}
-                    className="text-slate-500 hover:text-rose-400 transition-colors p-1"
-                    title="Delete Comment"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {(canManageProjects || c.user?.id === user?.id) && (
+                    <button
+                      onClick={() => handleDeleteComment(c.id)}
+                      className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                      title="Delete Comment"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))
             )}

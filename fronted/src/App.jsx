@@ -15,6 +15,7 @@ import CreateProjectForm from "./pages/Project/CreateProjectForm";
 import AcceptInvitation from "./pages/Invitation/AcceptInvitation";
 import Subscription from "./pages/Subscription/Subscription";
 import PaymentSuccess from "./pages/Subscription/PaymentSuccess";
+import AdminUsers from "./pages/Admin/AdminUsers";
 
 function App() {
   const { user } = useAuth();
@@ -79,6 +80,16 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProjectDetails />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin Console Route */}
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <AdminUsers />
                   </ProtectedRoute>
                 }
               />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { projectService } from "../../services/projectService";
+import { useAuth } from "../../context/AuthContext";
 import ProjectCard from "../Project/ProjectCard";
 import { Search, Filter, Layers, RefreshCw, Plus } from "lucide-react";
 
@@ -19,6 +20,7 @@ export const tags = [
 const categories = ["all", "fullstack", "frontend", "backend"];
 
 export const ProjectList = ({ onOpenCreateProject }) => {
+  const { canManageProjects } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -57,7 +59,7 @@ export const ProjectList = ({ onOpenCreateProject }) => {
       await projectService.deleteProject(projectId);
       setProjects(projects.filter((p) => p.id !== projectId));
     } catch (err) {
-      alert("Failed to delete project. You may need owner privileges.");
+      alert("Failed to delete project. You may need owner or admin privileges.");
     }
   };
 
@@ -75,7 +77,7 @@ export const ProjectList = ({ onOpenCreateProject }) => {
           </p>
         </div>
 
-        {onOpenCreateProject && (
+        {canManageProjects && onOpenCreateProject && (
           <button
             onClick={onOpenCreateProject}
             className="self-start md:self-auto px-5 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2"
@@ -215,9 +217,9 @@ export const ProjectList = ({ onOpenCreateProject }) => {
               </div>
               <h3 className="text-xl font-bold text-white">No Projects Found</h3>
               <p className="text-slate-400 text-sm mt-1 max-w-sm mx-auto">
-                No projects match your criteria. Try creating a new project or resetting filters.
+                No projects match your criteria.
               </p>
-              {onOpenCreateProject && (
+              {canManageProjects && onOpenCreateProject && (
                 <button
                   onClick={onOpenCreateProject}
                   className="mt-6 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl"

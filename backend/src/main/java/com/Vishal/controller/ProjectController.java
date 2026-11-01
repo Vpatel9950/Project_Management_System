@@ -4,6 +4,7 @@ import com.Vishal.model.Chat;
 import com.Vishal.model.Invitation;
 import com.Vishal.model.Project;
 import com.Vishal.model.User;
+import com.Vishal.model.UserRole;
 import com.Vishal.repository.InviteRequest;
 import com.Vishal.response.MessageResponse;
 import com.Vishal.service.InvitationService;
@@ -11,7 +12,6 @@ import com.Vishal.service.ProjectService;
 import com.Vishal.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,6 +57,9 @@ public class ProjectController {
             @RequestBody Project project
     ) throws Exception {
         User user=userService.findUserProfileByJwt(jwt);
+        if (user.getRole() == UserRole.ROLE_MEMBER) {
+            throw new Exception("Access Denied: Members cannot create projects. Only Managers and Admins have permission.");
+        }
         Project createdproject=projectService.createProject(project,user);
         return new ResponseEntity<>(createdproject, HttpStatus.OK);
     }
@@ -68,6 +71,9 @@ public class ProjectController {
             @RequestBody Project project
     ) throws Exception {
         User user=userService.findUserProfileByJwt(jwt);
+        if (user.getRole() == UserRole.ROLE_MEMBER) {
+            throw new Exception("Access Denied: Members cannot update project settings.");
+        }
         Project updatedProject=projectService.updateProject(project,projectId);
         return new ResponseEntity<>(updatedProject, HttpStatus.OK);
     }
@@ -82,8 +88,6 @@ public class ProjectController {
         MessageResponse res=new MessageResponse("Project Deleted Successfully");
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
-
-
 
     @GetMapping("/search")
     public ResponseEntity<List<Project>>searchProjects(
@@ -105,19 +109,19 @@ public class ProjectController {
         return new ResponseEntity<>(chat, HttpStatus.OK);
     }
 
-
     @PostMapping("/invite")
     public ResponseEntity<MessageResponse>inviteProject(
             @RequestBody InviteRequest req,
             @RequestHeader("Authorization")String jwt
     ) throws Exception {
         User user=userService.findUserProfileByJwt(jwt);
+        if (user.getRole() == UserRole.ROLE_MEMBER) {
+            throw new Exception("Access Denied: Only Managers and Admins can invite team members.");
+        }
         invitationService.sendInvitation(req.getEmail(),req.getProjectId());
         MessageResponse res=new MessageResponse("User Invitation Sent");
         return new ResponseEntity<>(res,HttpStatus.OK);
     }
-
-
 
     @GetMapping("/accept_invitation")
     public ResponseEntity<Invitation>acceptInviteProject(

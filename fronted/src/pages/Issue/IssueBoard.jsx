@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { issueService } from "../../services/issueService";
+import { useAuth } from "../../context/AuthContext";
 import CreateIssueModal from "./CreateIssueModal";
 import IssueDetailsModal from "./IssueDetailsModal";
 import {
@@ -11,6 +12,7 @@ import {
   User,
   Calendar,
   AlertCircle,
+  ShieldAlert,
 } from "lucide-react";
 
 const columns = [
@@ -38,6 +40,7 @@ const columns = [
 ];
 
 const IssueBoard = ({ projectId, teamMembers = [] }) => {
+  const { canManageProjects, isMember } = useAuth();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -86,13 +89,19 @@ const IssueBoard = ({ projectId, teamMembers = [] }) => {
           <h2 className="text-xl font-bold text-white">Task Board</h2>
         </div>
 
-        <button
-          onClick={() => setIsCreateOpen(true)}
-          className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Task</span>
-        </button>
+        {canManageProjects ? (
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Task</span>
+          </button>
+        ) : (
+          <span className="text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+            Member mode: Click tasks to update progress & status
+          </span>
+        )}
       </div>
 
       {/* 3D Kanban Columns Grid */}
@@ -176,12 +185,14 @@ const IssueBoard = ({ projectId, teamMembers = [] }) => {
       </div>
 
       {/* Modals */}
-      <CreateIssueModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        projectId={projectId}
-        onIssueCreated={handleIssueCreated}
-      />
+      {canManageProjects && (
+        <CreateIssueModal
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          projectId={projectId}
+          onIssueCreated={handleIssueCreated}
+        />
+      )}
 
       <IssueDetailsModal
         isOpen={!!selectedIssue}

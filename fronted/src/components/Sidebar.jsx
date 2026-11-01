@@ -1,14 +1,19 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   FolderKanban,
   Crown,
   PlusCircle,
   Sparkles,
+  Shield,
+  Users,
 } from "lucide-react";
 
 const Sidebar = ({ onOpenCreateProject }) => {
+  const { isAdmin, canManageProjects } = useAuth();
+
   const navItems = [
     {
       name: "Dashboard",
@@ -22,6 +27,16 @@ const Sidebar = ({ onOpenCreateProject }) => {
       icon: FolderKanban,
       color: "text-purple-400",
     },
+    ...(isAdmin
+      ? [
+          {
+            name: "User Management",
+            path: "/admin/users",
+            icon: Users,
+            color: "text-rose-400",
+          },
+        ]
+      : []),
     {
       name: "Subscription",
       path: "/subscription",
@@ -32,8 +47,8 @@ const Sidebar = ({ onOpenCreateProject }) => {
 
   return (
     <aside className="w-64 hidden md:flex flex-col bg-slate-950/60 backdrop-blur-xl border-r border-slate-800/80 p-4 shrink-0 min-h-[calc(100vh-4rem)]">
-      {/* Quick Action Button */}
-      {onOpenCreateProject && (
+      {/* Quick Action Button - Managers & Admins only */}
+      {canManageProjects && onOpenCreateProject && (
         <div className="mb-6">
           <button
             onClick={onOpenCreateProject}
